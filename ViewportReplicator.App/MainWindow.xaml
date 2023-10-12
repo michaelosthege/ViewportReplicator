@@ -1,0 +1,34 @@
+﻿<Window x:Class="ViewportReplicator.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ViewportReplicator.App"
+        mc:Ignorable="d"
+        Title="Viewport Replicator"
+        Height="Auto" Width="450" SizeToContent="Height"
+        ResizeMode="NoResize"
+        x:Name="self"
+        DataContext="{Binding ElementName=self}"
+        >
+
+    <Grid>
+        <StackPanel Margin="10,0,10,10">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type Label}">
+                    <Setter Property="Margin" Value="0,10,0,0"/>
+                </Style>
+            </StackPanel.Resources>
+            
+            <Label>Path to DCS monitor config</Label>
+            <TextBox Text="{Binding PathToMonitorConfigLua, Mode=TwoWay}" IsEnabled="{Binding IsEditable}" />
+            <Label>Left,Top,Height,Width of the output</Label>
+            <TextBox Text="{Binding RawOutputRegion, Mode=TwoWay}" IsEnabled="{Binding IsEditable}" />
+            <Button Margin="0,10,0,0" Content="Activate" Command="{Binding ActivateCommand}" />
+        </StackPanel>
+        <!-- render output frame for better debuggability-->
+        <Border x:Name="renderOutput" BorderThickness="1" BorderBrush="Green" Visibility="Hidden">
+            <Image x:Name="renderImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Fill" />
+        </Border>
+    </Grid>
+</Window>

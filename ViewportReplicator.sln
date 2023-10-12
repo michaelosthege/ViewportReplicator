@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewportReplicator.App", "ViewportReplicator.App\ViewportReplicator.App.csproj", "{1BAB677B-32F8-4252-9FF3-D16626693463}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1BAB677B-32F8-4252-9FF3-D16626693463}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BAB677B-32F8-4252-9FF3-D16626693463}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BAB677B-32F8-4252-9FF3-D16626693463}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BAB677B-32F8-4252-9FF3-D16626693463}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {227580A7-5F8C-4516-912B-89CE374BAF1A}
+	EndGlobalSection
+EndGlobal
