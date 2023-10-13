@@ -1,4 +1,4 @@
-using Capture;
+﻿using Capture;
 using Capture.Interface;
 using GalaSoft.MvvmLight.Command;
 using System;
@@ -47,7 +47,7 @@ namespace ViewportReplicator.App
         private static Process DCSProcess { get { return Process.GetProcessesByName("DCS").FirstOrDefault(); } }
         public static bool IsDCSRunning { get { return DCSProcess != null; } }
 
-        private string _PathToMonitorConfigLua = "%USERPROFILE%\\Saved Games\\DCS\\Config\\MonitorSetup\\Helios.lua";
+        private string _PathToMonitorConfigLua = "%USERPROFILE%\\Saved Games\\DCS\\Config\\MonitorSetup\\DualMFD.lua";
         public string PathToMonitorConfigLua
         {
             get { return _PathToMonitorConfigLua; }
@@ -71,7 +71,7 @@ namespace ViewportReplicator.App
             }
         }
 
-        private string _RawOutputRegion = "110,2160,620,620";
+        private string _RawOutputRegion = "3953,-8,600,595";
         public string RawOutputRegion
         {
             get { return _RawOutputRegion; }
