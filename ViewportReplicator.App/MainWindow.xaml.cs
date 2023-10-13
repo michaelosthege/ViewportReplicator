@@ -1,11 +1,17 @@
+﻿using Capture;
+using Capture.Interface;
 using GalaSoft.MvvmLight.Command;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace ViewportReplicator.App
 {
@@ -32,13 +38,14 @@ namespace ViewportReplicator.App
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanActivate));
                 OnPropertyChanged(nameof(IsEditable));
+                ActivateCommand.RaiseCanExecuteChanged();
             }
         }
 
         public bool IsEditable { get { return !IsRenderActive; } }
 
-        private static Process DCSProcess { get { return Process.GetProcessesByName("DCS.exe").FirstOrDefault();  } }
-        public static bool IsDCSRunning { get { return DCSProcess != null || true; } }
+        private static Process DCSProcess { get { return Process.GetProcessesByName("DCS").FirstOrDefault(); } }
+        public static bool IsDCSRunning { get { return DCSProcess != null; } }
 
         private string _PathToMonitorConfigLua = "%USERPROFILE%\\Saved Games\\DCS\\Config\\MonitorSetup\\Helios.lua";
         public string PathToMonitorConfigLua
@@ -64,7 +71,7 @@ namespace ViewportReplicator.App
             }
         }
 
-        private string _RawOutputRegion = "110,0,610,610";
+        private string _RawOutputRegion = "110,2160,620,620";
         public string RawOutputRegion
         {
             get { return _RawOutputRegion; }
@@ -128,6 +135,8 @@ namespace ViewportReplicator.App
             }
         }
 
+        private CaptureInterface _CaptureInterface;
+        private CaptureProcess _CaptureProcess;
 
         public MainWindow()
         {
@@ -155,6 +164,20 @@ namespace ViewportReplicator.App
 
         private void ActivateRendering()
         {
+            // Initialize the capturing process
+            var config = new CaptureConfig()
+            {
+                Direct3DVersion = Direct3DVersion.Direct3D11,
+                TargetFramesPerSecond = 20,
+            };
+            if (_CaptureProcess == null)
+            {
+                _CaptureInterface = new CaptureInterface();
+                _CaptureInterface.RemoteMessage += CaptureInterface_RemoteMessage;
+                _CaptureProcess = new CaptureProcess(DCSProcess, config, _CaptureInterface);
+            }
+            RequestScreenshot();
+
             // Morph Window into the render output
             WindowStyle = WindowStyle.None;
             SizeToContent = SizeToContent.Manual;
@@ -165,6 +188,64 @@ namespace ViewportReplicator.App
             this.Top = OutputRect.Top;
             renderOutput.Visibility = Visibility.Visible;
             IsRenderActive = true;
+        }
+
+        private void RequestScreenshot()
+        {
+            if (ViewportRegion == null)
+            {
+                return;
+            }
+            // Initiate the screenshot & the appropriate event handler within the target process will take care of the rest
+            _CaptureProcess.CaptureInterface.BeginGetScreenshot(
+                region: (Rectangle)ViewportRegion,
+                timeout: new TimeSpan(0, 0, 2),
+                callback: Callback,
+                resize: null,
+                format: (ImageFormat)Enum.Parse(typeof(ImageFormat), "Bitmap")
+            );
+        }
+
+        /// <summary>
+        /// The callback for when the screenshot has been taken
+        /// </summary>
+        void Callback(IAsyncResult result)
+        {
+            using Screenshot screenshot = _CaptureProcess.CaptureInterface.EndGetScreenshot(result);
+            try
+            {
+                if (screenshot != null && screenshot.Data != null)
+                {
+                    Bitmap bmp = screenshot.ToBitmap();
+
+                    using (MemoryStream memory = new MemoryStream())
+                    {
+                        bmp.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                        memory.Position = 0;
+                        Dispatcher.Invoke(delegate()
+                        {
+                            BitmapImage bitmapimage = new BitmapImage();
+                            bitmapimage.BeginInit();
+                            bitmapimage.StreamSource = memory;
+                            bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmapimage.EndInit();
+                            renderImage.Source = bitmapimage;
+                        });
+                    }
+                }
+
+                Thread t = new Thread(new ThreadStart(RequestScreenshot));
+                t.Start();
+            }
+            catch (Exception ex)
+            {
+                Debugger.Break();
+            }
+        }
+
+        private void CaptureInterface_RemoteMessage(MessageReceivedEventArgs message)
+        {
+            Debug.WriteLine(message.Message);
         }
 
         private void DeactivateRendering()
@@ -180,6 +261,12 @@ namespace ViewportReplicator.App
             this.Top = PreActivationRect.Top;
             SizeToContent = SizeToContent.Height;
             IsRenderActive = false;
+
+            // Stop capture process
+            //_CaptureProcess.Dispose();
+            //_CaptureInterface.RemoteMessage -= CaptureInterface_RemoteMessage;
+            //_CaptureInterface.Disconnect();
+            //_CaptureInterface = null;
         }
     }
 }
