@@ -29,11 +29,14 @@
             <Button Margin="0,10,0,0" Content="Activate" Command="{Binding ActivateCommand}" />
         </StackPanel>
         <!-- render output frame for better debuggability-->
-        <Border x:Name="renderOutput" BorderThickness="1" BorderBrush="Green" Visibility="Hidden">
+        <Border x:Name="renderOutput" BorderThickness="0" BorderBrush="Green" Visibility="Hidden">
             <Image x:Name="renderImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Fill" RenderTransformOrigin="0.5, 0.5">
                 <Image.RenderTransform>
                     <RotateTransform Angle="180" CenterX="0.5" CenterY="0.5" />
                 </Image.RenderTransform>
+                <Image.InputBindings>
+                    <MouseBinding Gesture="MiddleClick" Command="{Binding DeactivateCommand}" />
+                </Image.InputBindings>
             </Image>
         </Border>
     </Grid>

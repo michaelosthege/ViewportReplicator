@@ -1,4 +1,4 @@
-﻿using Capture;
+using Capture;
 using Capture.Interface;
 using GalaSoft.MvvmLight.Command;
 using System;
@@ -135,6 +135,19 @@ namespace ViewportReplicator.App
             }
         }
 
+        private RelayCommand _DeactivateCommand;
+        public RelayCommand DeactivateCommand
+        {
+            get
+            {
+                if (_DeactivateCommand == null)
+                {
+                    _DeactivateCommand = new RelayCommand(DeactivateRendering);
+                }
+                return _DeactivateCommand;
+            }
+        }
+
         private CaptureInterface _CaptureInterface;
         private CaptureProcess _CaptureProcess;
 
@@ -142,7 +155,6 @@ namespace ViewportReplicator.App
         {
             ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
             InitializeComponent();
-            this.KeyDown += MainWindow_KeyDown;
             this.Deactivated += MainWindow_Deactivated;
         }
 
@@ -152,14 +164,6 @@ namespace ViewportReplicator.App
                 return;
             Window window = (Window)sender;
             window.Topmost = true;
-        }
-
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Escape)
-            {
-                DeactivateRendering();
-            }
         }
 
         private void ActivateRendering()
