@@ -1,0 +1,3 @@
+[submodule "Direct3DHook"]
+	path = Direct3DHook
+	url = https://github.com/justinstenning/Direct3DHook
