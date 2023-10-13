@@ -60,7 +60,7 @@ namespace ViewportReplicator.App
             {
                 try
                 {
-                    string[] values = RawOutputRegion.Split(",");
+                    string[] values = RawOutputRegion.Split(',');
                     return new Rect(
                         Convert.ToInt32(values[0]),
                         Convert.ToInt32(values[1]),
