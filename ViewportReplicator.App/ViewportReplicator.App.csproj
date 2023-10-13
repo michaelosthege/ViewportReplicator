@@ -111,5 +111,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Direct3DHook\Capture\Capture.csproj">
+      <Project>{23178a3d-2ac0-419a-b1b6-59ca45191270}</Project>
+      <Name>Capture</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{E3A6BD81-4874-4DE2-BD40-090D796C54F1}") = "ViewportReplicator.App", "ViewportReplicator.App\ViewportReplicator.App.csproj", "{E3A6BD81-4874-4DE2-BD40-090D796C54F1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewportReplicator.App", "ViewportReplicator.App\ViewportReplicator.App.csproj", "{E3A6BD81-4874-4DE2-BD40-090D796C54F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Capture", "Direct3DHook\Capture\Capture.csproj", "{23178A3D-2AC0-419A-B1B6-59CA45191270}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{E3A6BD81-4874-4DE2-BD40-090D796C54F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E3A6BD81-4874-4DE2-BD40-090D796C54F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E3A6BD81-4874-4DE2-BD40-090D796C54F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23178A3D-2AC0-419A-B1B6-59CA45191270}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23178A3D-2AC0-419A-B1B6-59CA45191270}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23178A3D-2AC0-419A-B1B6-59CA45191270}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23178A3D-2AC0-419A-B1B6-59CA45191270}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
