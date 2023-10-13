@@ -1,7 +1,8 @@
-﻿using GalaSoft.MvvmLight.Command;
+using GalaSoft.MvvmLight.Command;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
@@ -36,10 +37,32 @@ namespace ViewportReplicator.App
 
         public bool IsEditable { get { return !IsRenderActive; } }
 
-        public static bool IsDCSRunning { get { return Process.GetProcessesByName("DCS.exe").Length > 0 || true; } }
+        private static Process DCSProcess { get { return Process.GetProcessesByName("DCS.exe").FirstOrDefault();  } }
+        public static bool IsDCSRunning { get { return DCSProcess != null || true; } }
 
         private string _PathToMonitorConfigLua = "%USERPROFILE%\\Saved Games\\DCS\\Config\\MonitorSetup\\Helios.lua";
-        public string PathToMonitorConfigLua { get { return _PathToMonitorConfigLua; } set { _PathToMonitorConfigLua = value; OnPropertyChanged(); } }
+        public string PathToMonitorConfigLua
+        {
+            get { return _PathToMonitorConfigLua; }
+            set
+            {
+                _PathToMonitorConfigLua = value;
+                OnPropertyChanged();
+                ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
+            }
+        }
+
+        private string _ViewportID = "FA_18C_LEFT_MFCD";
+        public string ViewportID
+        {
+            get { return _ViewportID; }
+            set
+            {
+                _ViewportID = value;
+                OnPropertyChanged();
+                ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
+            }
+        }
 
         private string _RawOutputRegion = "110,0,610,610";
         public string RawOutputRegion
@@ -50,6 +73,18 @@ namespace ViewportReplicator.App
                 _RawOutputRegion = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(OutputRect));
+            }
+        }
+
+        private Rectangle? _ViewportRegion;
+        public Rectangle? ViewportRegion
+        {
+            get { return _ViewportRegion; }
+            set
+            {
+                _ViewportRegion = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CanActivate));
             }
         }
 
@@ -79,7 +114,7 @@ namespace ViewportReplicator.App
         {
             get
             {
-                return !IsRenderActive && IsEditable && IsDCSRunning && OutputRect != Rect.Empty;
+                return !IsRenderActive && IsEditable && IsDCSRunning && ViewportRegion != null && OutputRect != Rect.Empty;
             }
         }
 
@@ -96,6 +131,7 @@ namespace ViewportReplicator.App
 
         public MainWindow()
         {
+            ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
             InitializeComponent();
             this.KeyDown += MainWindow_KeyDown;
             this.Deactivated += MainWindow_Deactivated;

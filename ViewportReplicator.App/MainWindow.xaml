@@ -19,9 +19,11 @@
                     <Setter Property="Margin" Value="0,10,0,0"/>
                 </Style>
             </StackPanel.Resources>
-            
+
             <Label>Path to DCS monitor config</Label>
             <TextBox Text="{Binding PathToMonitorConfigLua, Mode=TwoWay}" IsEnabled="{Binding IsEditable}" />
+            <Label>DCS Viewport ID</Label>
+            <TextBox Text="{Binding ViewportID, Mode=TwoWay}" IsEnabled="{Binding IsEditable}" />
             <Label>Left,Top,Height,Width of the output</Label>
             <TextBox Text="{Binding RawOutputRegion, Mode=TwoWay}" IsEnabled="{Binding IsEditable}" />
             <Button Margin="0,10,0,0" Content="Activate" Command="{Binding ActivateCommand}" />
