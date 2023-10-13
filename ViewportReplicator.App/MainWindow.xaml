@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ViewportReplicator.App"
         mc:Ignorable="d"
-        Title="Viewport Replicator"
+        Title="Viewport Rotator"
         Height="Auto" Width="450" SizeToContent="Height"
         ResizeMode="NoResize"
         x:Name="self"
@@ -30,7 +30,11 @@
         </StackPanel>
         <!-- render output frame for better debuggability-->
         <Border x:Name="renderOutput" BorderThickness="1" BorderBrush="Green" Visibility="Hidden">
-            <Image x:Name="renderImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Fill" />
+            <Image x:Name="renderImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Fill">
+                <Image.RenderTransform>
+                    <RotateTransform Angle="180" />
+                </Image.RenderTransform>
+            </Image>
         </Border>
     </Grid>
 </Window>
