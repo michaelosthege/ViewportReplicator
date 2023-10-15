@@ -12,6 +12,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace ViewportReplicator.App
 {
@@ -36,16 +37,8 @@ namespace ViewportReplicator.App
             {
                 _IsRenderActive = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(CanActivate));
-                OnPropertyChanged(nameof(IsEditable));
-                ActivateCommand.RaiseCanExecuteChanged();
             }
         }
-
-        public bool IsEditable { get { return !IsRenderActive; } }
-
-        private static Process DCSProcess { get { return Process.GetProcessesByName("DCS").FirstOrDefault(); } }
-        public static bool IsDCSRunning { get { return DCSProcess != null; } }
 
         private string _PathToMonitorConfigLua = "%USERPROFILE%\\Saved Games\\DCS\\Config\\MonitorSetup\\DualMFD.lua";
         public string PathToMonitorConfigLua
@@ -54,8 +47,8 @@ namespace ViewportReplicator.App
             set
             {
                 _PathToMonitorConfigLua = value;
-                OnPropertyChanged();
                 ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
+                OnPropertyChanged();
             }
         }
 
@@ -66,12 +59,12 @@ namespace ViewportReplicator.App
             set
             {
                 _ViewportID = value;
-                OnPropertyChanged();
                 ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
+                OnPropertyChanged();
             }
         }
 
-        private string _RawOutputRegion = "3953,-8,600,595";
+        private string _RawOutputRegion = "3953,0,600,595";
         public string RawOutputRegion
         {
             get { return _RawOutputRegion; }
@@ -79,7 +72,6 @@ namespace ViewportReplicator.App
             {
                 _RawOutputRegion = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(OutputRect));
             }
         }
 
@@ -87,15 +79,37 @@ namespace ViewportReplicator.App
         public Rectangle? ViewportRegion
         {
             get { return _ViewportRegion; }
-            set
+            private set
             {
                 _ViewportRegion = value;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(CanActivate));
             }
         }
 
-        private Rect PreActivationRect { get; set; }
+        #region Commands
+        private RelayCommand _ActivateCommand;
+        public RelayCommand ActivateCommand
+        {
+            get
+            {
+                _ActivateCommand ??= new RelayCommand(ActivateRendering, () => CanActivate);
+                return _ActivateCommand;
+            }
+        }
+
+        private RelayCommand _DeactivateCommand;
+        public RelayCommand DeactivateCommand
+        {
+            get
+            {
+                _DeactivateCommand ??= new RelayCommand(DeactivateRendering);
+                return _DeactivateCommand;
+            }
+        }
+        #endregion
+
+        #region Dependent properties
+        public bool IsDCSRunning { get { return _DCSProcess != null; } }
         private Rect OutputRect
         {
             get
@@ -116,38 +130,21 @@ namespace ViewportReplicator.App
                 }
             }
         }
-
+        public bool IsViewportOK { get { return ViewportRegion != null; } }
+        public bool IsOutputOK { get { return OutputRect != Rect.Empty; } }
+        public bool IsEditable { get { return !IsRenderActive; } }
         public bool CanActivate
         {
             get
             {
-                return !IsRenderActive && IsEditable && IsDCSRunning && ViewportRegion != null && OutputRect != Rect.Empty;
+                return !IsRenderActive && IsEditable && IsDCSRunning && IsViewportOK && IsOutputOK;
             }
         }
+        #endregion
 
-        private RelayCommand? _ActivateCommand;
-        public RelayCommand ActivateCommand
-        {
-            get
-            {
-                _ActivateCommand ??= new RelayCommand(ActivateRendering, () => CanActivate);
-                return _ActivateCommand;
-            }
-        }
-
-        private RelayCommand _DeactivateCommand;
-        public RelayCommand DeactivateCommand
-        {
-            get
-            {
-                if (_DeactivateCommand == null)
-                {
-                    _DeactivateCommand = new RelayCommand(DeactivateRendering);
-                }
-                return _DeactivateCommand;
-            }
-        }
-
+        private Process _DCSProcess;
+        private DispatcherTimer _RefreshTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
+        private Rect _PreActivationRect;
         private CaptureInterface _CaptureInterface;
         private CaptureProcess _CaptureProcess;
 
@@ -156,6 +153,20 @@ namespace ViewportReplicator.App
             ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
             InitializeComponent();
             this.Deactivated += MainWindow_Deactivated;
+            _RefreshTimer.Tick += _RefreshTimer_Tick;
+            _RefreshTimer.Start();
+        }
+
+        private void _RefreshTimer_Tick(object sender, EventArgs e)
+        {
+            _DCSProcess = Process.GetProcessesByName("DCS").FirstOrDefault();
+            OnPropertyChanged(nameof(IsDCSRunning));
+            OnPropertyChanged(nameof(IsViewportOK));
+            OnPropertyChanged(nameof(IsOutputOK));
+            OnPropertyChanged(nameof(IsEditable));
+            OnPropertyChanged(nameof(CanActivate));
+            ActivateCommand.RaiseCanExecuteChanged();
+            DeactivateCommand.RaiseCanExecuteChanged();
         }
 
         private void MainWindow_Deactivated(object? sender, EventArgs e)
@@ -178,20 +189,20 @@ namespace ViewportReplicator.App
             {
                 _CaptureInterface = new CaptureInterface();
                 _CaptureInterface.RemoteMessage += CaptureInterface_RemoteMessage;
-                _CaptureProcess = new CaptureProcess(DCSProcess, config, _CaptureInterface);
+                _CaptureProcess = new CaptureProcess(_DCSProcess, config, _CaptureInterface);
             }
             RequestScreenshot();
 
             // Morph Window into the render output
             WindowStyle = WindowStyle.None;
             SizeToContent = SizeToContent.Manual;
-            PreActivationRect = new Rect(Left, Top, Width, Height);
-            this.Height = OutputRect.Height;
-            this.Width = OutputRect.Width;
-            this.Left = OutputRect.Left;
-            this.Top = OutputRect.Top;
+            _PreActivationRect = new Rect(Left, Top, Width, Height);
+            SetWindowSize(OutputRect);
             renderOutput.Visibility = Visibility.Visible;
             IsRenderActive = true;
+
+            // No need to keep refreshing
+            _RefreshTimer.Stop();
         }
 
         private void RequestScreenshot()
@@ -256,13 +267,13 @@ namespace ViewportReplicator.App
         {
             if (!IsRenderActive) { return; }
 
+            // Reactivate UI refreshing
+            _RefreshTimer.Start();
+
             // Reset Window to previous layout
             renderOutput.Visibility = Visibility.Collapsed;
             WindowStyle = WindowStyle.SingleBorderWindow;
-            this.Height = PreActivationRect.Height;
-            this.Width = PreActivationRect.Width;
-            this.Left = PreActivationRect.Left;
-            this.Top = PreActivationRect.Top;
+            SetWindowSize(_PreActivationRect);
             SizeToContent = SizeToContent.Height;
             IsRenderActive = false;
 
@@ -271,6 +282,14 @@ namespace ViewportReplicator.App
             //_CaptureInterface.RemoteMessage -= CaptureInterface_RemoteMessage;
             //_CaptureInterface.Disconnect();
             //_CaptureInterface = null;
+        }
+
+        private void SetWindowSize(Rect windowRect)
+        {
+            this.Left = windowRect.Left;
+            this.Top = windowRect.Top;
+            this.Height = windowRect.Height;
+            this.Width = windowRect.Width;
         }
     }
 }

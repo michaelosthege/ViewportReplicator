@@ -16,6 +16,9 @@
         <StackPanel Margin="10,0,10,10">
             <StackPanel.Resources>
                 <Style TargetType="{x:Type Label}">
+                    <Setter Property="Margin" Value="-5,10,0,0"/>
+                </Style>
+                <Style TargetType="{x:Type StackPanel}">
                     <Setter Property="Margin" Value="0,10,0,0"/>
                 </Style>
             </StackPanel.Resources>
@@ -26,6 +29,16 @@
             <TextBox Text="{Binding ViewportID, Mode=TwoWay}" IsEnabled="{Binding IsEditable}" />
             <Label>Left,Top,Height,Width of the output</Label>
             <TextBox Text="{Binding RawOutputRegion, Mode=TwoWay}" IsEnabled="{Binding IsEditable}" />
+            <StackPanel Orientation="Horizontal">
+                <StackPanel.Resources>
+                    <Style TargetType="{x:Type CheckBox}">
+                        <Setter Property="Margin" Value="0,0,10,0"/>
+                    </Style>
+                </StackPanel.Resources>
+                <CheckBox Content="DCS" IsEnabled="False" IsChecked="{Binding IsDCSRunning, Mode=OneWay}" />
+                <CheckBox Content="Viewport" IsEnabled="False" IsChecked="{Binding IsViewportOK, Mode=OneWay}" />
+                <CheckBox Content="Output" IsEnabled="False" IsChecked="{Binding IsOutputOK, Mode=OneWay}" />
+            </StackPanel>
             <Button Margin="0,10,0,0" Content="Activate" Command="{Binding ActivateCommand}" />
         </StackPanel>
         <!-- render output frame for better debuggability-->
