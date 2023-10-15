@@ -10,15 +10,11 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 namespace ViewportReplicator.App
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         #region INotifyPropertyChanged Members
@@ -29,17 +25,7 @@ namespace ViewportReplicator.App
         }
         #endregion
 
-        private bool _IsRenderActive;
-        public bool IsRenderActive
-        {
-            get { return _IsRenderActive; }
-            set
-            {
-                _IsRenderActive = value;
-                OnPropertyChanged();
-            }
-        }
-
+        #region Configuration properties
         private string _PathToMonitorConfigLua = "%USERPROFILE%\\Saved Games\\DCS\\Config\\MonitorSetup\\DualMFD.lua";
         public string PathToMonitorConfigLua
         {
@@ -47,7 +33,7 @@ namespace ViewportReplicator.App
             set
             {
                 _PathToMonitorConfigLua = value;
-                ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
+                _ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
                 OnPropertyChanged();
             }
         }
@@ -59,7 +45,7 @@ namespace ViewportReplicator.App
             set
             {
                 _ViewportID = value;
-                ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
+                _ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
                 OnPropertyChanged();
             }
         }
@@ -74,17 +60,7 @@ namespace ViewportReplicator.App
                 OnPropertyChanged();
             }
         }
-
-        private Rectangle? _ViewportRegion;
-        public Rectangle? ViewportRegion
-        {
-            get { return _ViewportRegion; }
-            private set
-            {
-                _ViewportRegion = value;
-                OnPropertyChanged();
-            }
-        }
+        #endregion
 
         #region Commands
         private RelayCommand _ActivateCommand;
@@ -130,34 +106,36 @@ namespace ViewportReplicator.App
                 }
             }
         }
-        public bool IsViewportOK { get { return ViewportRegion != null; } }
+        public bool IsViewportOK { get { return _ViewportRegion != null; } }
         public bool IsOutputOK { get { return OutputRect != Rect.Empty; } }
-        public bool IsEditable { get { return !IsRenderActive; } }
+        public bool IsEditable { get { return !_IsRenderActive; } }
         public bool CanActivate
         {
             get
             {
-                return !IsRenderActive && IsEditable && IsDCSRunning && IsViewportOK && IsOutputOK;
+                return !_IsRenderActive && IsEditable && IsDCSRunning && IsViewportOK && IsOutputOK;
             }
         }
         #endregion
 
         private Process _DCSProcess;
         private DispatcherTimer _RefreshTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
+        private bool _IsRenderActive;
+        private Rectangle? _ViewportRegion;
         private Rect _PreActivationRect;
         private CaptureInterface _CaptureInterface;
         private CaptureProcess _CaptureProcess;
 
         public MainWindow()
         {
-            ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
+            _ViewportRegion = MonitorConfigParser.GetViewportRegion(ViewportID, PathToMonitorConfigLua);
             InitializeComponent();
             this.Deactivated += MainWindow_Deactivated;
-            _RefreshTimer.Tick += _RefreshTimer_Tick;
+            _RefreshTimer.Tick += RefreshTimer_Tick;
             _RefreshTimer.Start();
         }
 
-        private void _RefreshTimer_Tick(object sender, EventArgs e)
+        private void RefreshTimer_Tick(object sender, EventArgs e)
         {
             _DCSProcess = Process.GetProcessesByName("DCS").FirstOrDefault();
             OnPropertyChanged(nameof(IsDCSRunning));
@@ -199,7 +177,7 @@ namespace ViewportReplicator.App
             _PreActivationRect = new Rect(Left, Top, Width, Height);
             SetWindowSize(OutputRect);
             renderOutput.Visibility = Visibility.Visible;
-            IsRenderActive = true;
+            _IsRenderActive = true;
 
             // No need to keep refreshing
             _RefreshTimer.Stop();
@@ -207,13 +185,13 @@ namespace ViewportReplicator.App
 
         private void RequestScreenshot()
         {
-            if (ViewportRegion == null)
+            if (_ViewportRegion == null)
             {
                 return;
             }
             // Initiate the screenshot & the appropriate event handler within the target process will take care of the rest
             _CaptureProcess.CaptureInterface.BeginGetScreenshot(
-                region: (Rectangle)ViewportRegion,
+                region: (Rectangle)_ViewportRegion,
                 timeout: new TimeSpan(0, 0, 2),
                 callback: Callback,
                 resize: null,
@@ -265,7 +243,7 @@ namespace ViewportReplicator.App
 
         private void DeactivateRendering()
         {
-            if (!IsRenderActive) { return; }
+            if (!_IsRenderActive) { return; }
 
             // Reactivate UI refreshing
             _RefreshTimer.Start();
@@ -275,7 +253,7 @@ namespace ViewportReplicator.App
             WindowStyle = WindowStyle.SingleBorderWindow;
             SetWindowSize(_PreActivationRect);
             SizeToContent = SizeToContent.Height;
-            IsRenderActive = false;
+            _IsRenderActive = false;
 
             // Stop capture process
             //_CaptureProcess.Dispose();
